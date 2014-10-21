@@ -1,6 +1,9 @@
 package record
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type Record struct {
 	Seq   int64
@@ -50,4 +53,28 @@ func TestMarshal(t *testing.T) {
 			t.Errorf("Unexpected value for Marshal: `%s`, expected `%s`", string(b), encTest.result)
 		}
 	}
+}
+
+func ExampleMarshal() {
+	pbm := struct {
+		Version string `record:"2,upper"`
+		Width   string `record:"3"`
+		Height  int    `record:"1"`
+		Filler  string `record:"1"`
+		
+		// These fields are skipped
+		Extension string `record:"-"`
+		
+		// Untagged field are encoded verbatim
+		Pixels string
+	} {
+		Version: "p1",
+		Width: "2 ",
+		Height: 2,
+		Extension: "pbm",
+		Pixels: "1 0 1 0",
+	}
+	b, _ := Marshal(&pbm)
+	fmt.Printf("%s", string(b))
+	// Output: P1 2 2 1 0 1 0
 }
