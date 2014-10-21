@@ -3,6 +3,7 @@ package record
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 type Record struct {
@@ -10,38 +11,50 @@ type Record struct {
 	Name  string `record:"6"`
 	Code  int64  `record:"6"`
 	Label string `record:"6,upper"`
-	
-    Internal    string `record:"-"`	
-	
+
+	Internal string `record:"-"`
+
 	Free string
 }
 
+type TsRecord struct {
+	Record
+	Date time.Time `record:"6"`
+}
+
 func TestMarshal(t *testing.T) {
-	encodeTests := []struct{
+	encodeTests := []struct {
 		src    interface{}
 		result string
-	} {
+	}{
 		{
 			Record{
-				Seq: 1,
-				Name: "HELLO",
-				Code: 0,
-				Label: "Hello World",
+				Seq:      1,
+				Name:     "HELLO",
+				Code:     0,
+				Label:    "Hello World",
 				Internal: "Unused",
-				Free: "world",
+				Free:     "world",
 			},
 			"1 HELLO000000HELLO world",
 		},
 		{
 			Record{
-				Seq: 1,
-				Name: "ERROR",
-				Code: 12345,
-				Label: "Stack Overflow",
+				Seq:      1,
+				Name:     "ERROR",
+				Code:     12345,
+				Label:    "Stack Overflow",
 				Internal: "Unused",
-				Free: "Overflow",
+				Free:     "Overflow",
 			},
 			"1 ERROR012345STACK Overflow",
+		},
+		{
+			TsRecord{
+				Record: Record{},
+				Date:   time.Date(2014, time.November, 21, 20, 26, 0, 0, time.UTC),
+			},
+			"0      000000      20141121",
 		},
 	}
 	for _, encTest := range encodeTests {
@@ -61,18 +74,18 @@ func ExampleMarshal() {
 		Width   string `record:"3"`
 		Height  int    `record:"1"`
 		Filler  string `record:"1"`
-		
+
 		// These fields are skipped
 		Extension string `record:"-"`
-		
+
 		// Untagged field are encoded verbatim
 		Pixels string
-	} {
-		Version: "p1",
-		Width: "2 ",
-		Height: 2,
+	}{
+		Version:   "p1",
+		Width:     "2 ",
+		Height:    2,
 		Extension: "pbm",
-		Pixels: "1 0 1 0",
+		Pixels:    "1 0 1 0",
 	}
 	b, _ := Marshal(&pbm)
 	fmt.Printf("%s", string(b))

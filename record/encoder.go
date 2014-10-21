@@ -7,6 +7,15 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
+)
+
+var (
+	// DateFormat is used to format strings from
+	DateFormat = "20060102"
+
+	// dateType is used to signal that we are travessing a time.Time
+	dateType = reflect.TypeOf(time.Time{})
 )
 
 // Marshal takes a struct value or pointer
@@ -53,9 +62,10 @@ func (e *Encoder) Encode(src interface{}) error {
 }
 
 // encodeStruct encodes the content of struct s into w.
-func (e *Encoder) encodeStruct(val reflect.Value, sType reflect.Type) error {
+func (e *Encoder) encodeStruct(s reflect.Value, sType reflect.Type) error {
 	for i := 0; i < sType.NumField(); i++ {
 		f := sType.Field(i)
+		fval := s.Field(i)
 		tag := parseTags(f)
 		if tag.skip {
 			continue
@@ -66,13 +76,13 @@ func (e *Encoder) encodeStruct(val reflect.Value, sType reflect.Type) error {
 			if !tag.noPadding {
 				fmtSpec = fmt.Sprintf("%%0%dd", tag.size)
 			}
-			fmt.Fprintf(e.w, fmtSpec, val.Field(i).Int())
+			fmt.Fprintf(e.w, fmtSpec, fval.Int())
 		case reflect.String:
 			fmtSpec := "%s"
 			if !tag.noPadding {
 				fmtSpec = fmt.Sprintf("%% %ds", tag.size)
 			}
-			str := val.Field(i).String()
+			str := fval.String()
 			if tag.upper {
 				str = strings.ToUpper(str)
 			}
@@ -80,6 +90,13 @@ func (e *Encoder) encodeStruct(val reflect.Value, sType reflect.Type) error {
 				str = string([]rune(str)[:tag.size])
 			}
 			fmt.Fprintf(e.w, fmtSpec, str)
+		case reflect.Struct:
+			// Special case some stdlib structs
+			if f.Type.ConvertibleTo(dateType) {
+				fmt.Fprintf(e.w, "%s", fval.Interface().(time.Time).Format(DateFormat))
+			} else if err := e.encodeStruct(fval, f.Type); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
