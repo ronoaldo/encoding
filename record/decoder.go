@@ -45,7 +45,6 @@ func (e ErrorList) Error() string {
 
 // Add append a new DecodingError to the error list.
 func (e *ErrorList) Add(errType int, field string, err error) {
-	log.Printf(":debug: Add %v, %v, %v", errType, field, err)
 	e.Errors = append(e.Errors, DecodingError{
 		Type:  errType,
 		Field: field,
@@ -164,7 +163,6 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 		}
 	}
 
-	log.Printf(":debug: errorlist: %#v", errorList)
 	if len(errorList.Errors) > 0 {
 		return errorList
 	}

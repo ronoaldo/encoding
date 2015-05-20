@@ -2,15 +2,18 @@
 // Licensed under the terms of the Apache License 2.0
 
 /*
-Package record provides fixed width record encoding utilities.
+Package record provides encoding and decoding utilities
+for text files that store fixed-width records.
+
+A fixed-width text file is a form of Flat file database [1],
+commonly used to exchange data between
+different financial institutions, banks, and some legacy systems
+usually with the intent to perform batch processing.
 
 
 Encoding
 
 The Encoder type converts struct fields into fixed width records.
-These records are commonly used for data transport
-on legacy systems, or some financial institutions, to name a few.
-
 The struct fields of type string and int
 are encoded with left-padding by default,
 respectivelly using spaces or zeroes.
@@ -18,6 +21,24 @@ All other types are ignored by the encoder.
 
 The convenience function Marshal
 encodes a value and returns the encoded record bytes.
+
+
+Decoding
+
+The Decoder type converts data from an io.Reader containing
+fixed width values into a struct value.
+
+You initialize the Decoder with a reader by calling NewDecoder,
+and then call Decode() into a struct pointer
+in order to convert a single line into a struct.
+
+If all records within the reader are of the same type,
+the same decoder can be used to read all data from the
+reader, by issuing multiple calls to the Decode method.
+
+All decoding errors are aggregated and returned as an
+ErrorList, allowing callers to provide more usefull
+error messages in their applications.
 
 
 Tags
@@ -40,5 +61,10 @@ The tag can have a "upper" option,
 that causes strings to be upper cased before encoding.
 
 When the tag option "-" is present, the field is skipped.
+
+
+---
+
+[1] http://en.wikipedia.org/wiki/Flat_file_database
 */
 package record
