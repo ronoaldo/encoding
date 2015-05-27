@@ -30,7 +30,7 @@ type DecodingError struct {
 
 // Error return the underlying error message
 func (d DecodingError) Error() string {
-	return fmt.Sprintf("record: decoding error: %v on field %s", d.Err.Error(), d.Field)
+	return fmt.Sprintf("decode error: %s, field=%s, token=%s", d.Err.Error(), d.Field, d.Token)
 }
 
 // ErrorList wraps a series of DecodingError in order to allow
@@ -142,10 +142,10 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 				fval.SetInt(intVal)
 			} else {
 				// Optional tag avoids unwanted invalid syntax for whitespace values.
-				if !tag.optional && token != "" {
-					errorList.Add(ErrInvalidInt, f.Name, token, err)
+				if tag.optional && token == "" {
+					continue
 				}
-				continue
+				errorList.Add(ErrInvalidInt, f.Name, token, err)
 			}
 		case reflect.Struct:
 			if f.Type.ConvertibleTo(dateType) {
@@ -153,10 +153,10 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 				if timeVal, err := time.Parse(d.dt, token); err == nil {
 					fval.Set(reflect.ValueOf(timeVal))
 				} else {
-					if !tag.optional && token != "" {
-						errorList.Add(ErrInvalidDate, f.Name, token, err)
+					if tag.optional && token == "" {
+						continue
 					}
-					continue
+					errorList.Add(ErrInvalidDate, f.Name, token, err)
 				}
 			} else {
 				// Attempt to deep-decode nested structs

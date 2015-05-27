@@ -34,7 +34,7 @@ func TestErrorHandling(t *testing.T) {
 			t.Errorf("Returned error is not ErrorList: %t", err)
 		} else {
 			for _, err := range errList.Errors {
-				t.Logf("DecodingError: %v (%t)", err, err)
+				t.Logf("DecodingError: %v", err)
 			}
 		}
 	}
@@ -50,6 +50,28 @@ func TestTimeLayout(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	t.Logf("%v", ts)
+}
+
+func TestOptionalTag(t *testing.T) {
+	var err error
+	r := bytes.NewBuffer([]byte(`     `))
+	s := struct {
+		N int `record:"5"`
+	}{}
+	if err = NewDecoder(r).Decode(&s); err == nil {
+		t.Errorf("Nil error dec. empty number; expected invalid syntax")
+	} else if !strings.Contains(err.Error(), "invalid syntax") {
+		t.Errorf("Unexpected error dec. empty number: %v", err)
+	}
+	t.Logf("Decode error when empty, non-optional: %v", err)
+
+	s1 := struct {
+		N int `record:"5,optional"`
+	}{}
+	if err = NewDecoder(r).Decode(&s1); err != nil {
+		t.Errorf("Unexpected error decoding optional number: %v, expected nil", err)
+	}
+	t.Logf("Decode error when empty, optional: %v", err)
 }
 
 func Example_fileParsing() {
