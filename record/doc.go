@@ -60,6 +60,12 @@ Note that this can make the resulting record variable in length.
 The tag can have a "upper" option,
 that causes strings to be upper cased before encoding.
 
+The tag can have a "optional" value,
+meaning that a decoding error due to empty value
+will be silently ignored.
+This tag does not affect invalid values like 'a'
+for a decimal number.
+
 When the tag option "-" is present, the field is skipped.
 
 

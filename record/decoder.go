@@ -131,22 +131,28 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 
 		switch f.Type.Kind() {
 		case reflect.String:
-			fval.SetString(strings.TrimRight(token, " \t\n\r"))
+			fval.SetString(strings.TrimSpace(token))
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if intVal, err := strconv.ParseInt(token, 10, 64); err != nil {
-				errorList.Add(ErrInvalidInt, f.Name, err)
-				continue
-			} else {
+			token = strings.TrimSpace(token)
+			if intVal, err := strconv.ParseInt(token, 10, 64); err == nil {
 				fval.SetInt(intVal)
+			} else {
+				// Optional tag avoids unwanted invalid syntax for whitespace values.
+				if !tag.optional && token != "" {
+					errorList.Add(ErrInvalidInt, f.Name, err)
+				}
+				continue
 			}
 		case reflect.Struct:
 			if f.Type.ConvertibleTo(dateType) {
 				// We need to parse, reformat into the MarshallText, then unmarshal in t again
 				if timeVal, err := time.Parse(d.dt, token); err != nil {
-					errorList.Add(ErrInvalidDate, f.Name, err)
-					continue
-				} else {
 					fval.Set(reflect.ValueOf(timeVal))
+				} else {
+					if !tag.optional && token != "" {
+						errorList.Add(ErrInvalidDate, f.Name, err)
+					}
+					continue
 				}
 			} else {
 				// Attempt to deep-decode nested structs
