@@ -45,10 +45,11 @@ func (e ErrorList) Error() string {
 }
 
 // Add append a new DecodingError to the error list.
-func (e *ErrorList) Add(errType int, field string, err error) {
+func (e *ErrorList) Add(errType int, field, token string, err error) {
 	e.Errors = append(e.Errors, DecodingError{
 		Type:  errType,
 		Field: field,
+		Token: token,
 		Err:   err,
 	})
 }
@@ -111,7 +112,7 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 
 	if !d.sc.Scan() {
 		if d.sc.Err() != nil {
-			errorList.Add(ErrEOF, "", d.sc.Err())
+			errorList.Add(ErrEOF, "", "", d.sc.Err())
 			return errorList
 		}
 	}
@@ -142,7 +143,7 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 			} else {
 				// Optional tag avoids unwanted invalid syntax for whitespace values.
 				if !tag.optional && token != "" {
-					errorList.Add(ErrInvalidInt, f.Name, err)
+					errorList.Add(ErrInvalidInt, f.Name, token, err)
 				}
 				continue
 			}
@@ -153,7 +154,7 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 					fval.Set(reflect.ValueOf(timeVal))
 				} else {
 					if !tag.optional && token != "" {
-						errorList.Add(ErrInvalidDate, f.Name, err)
+						errorList.Add(ErrInvalidDate, f.Name, token, err)
 					}
 					continue
 				}
@@ -162,7 +163,7 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 				if err := d.decodeStruct(fval, f.Type); err != nil {
 					a := err.(ErrorList)
 					for _, err := range a.Errors {
-						errorList.Add(err.Type, err.Field, err.Err)
+						errorList.Add(err.Type, err.Field, token, err.Err)
 					}
 					continue
 				}
