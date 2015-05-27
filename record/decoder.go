@@ -24,6 +24,7 @@ const (
 type DecodingError struct {
 	Type  int    // Error type
 	Field string // Field name (in struct)
+	Token string // The token that failed to decode
 	Err   error  // The original error when decoding
 }
 
@@ -68,8 +69,10 @@ func NewDecoder(r io.Reader) *Decoder {
 
 // TimeLayout overrides the date/time layout, used in the next
 // call to Decode.
-func (d *Decoder) TimeLayout(layout string) {
+// Returns the same reference, for method chaining
+func (d *Decoder) TimeLayout(layout string) *Decoder {
 	d.dt = layout
+	return d
 }
 
 // Decode decodes the next line in the buffer into the specified value.
@@ -146,7 +149,7 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 		case reflect.Struct:
 			if f.Type.ConvertibleTo(dateType) {
 				// We need to parse, reformat into the MarshallText, then unmarshal in t again
-				if timeVal, err := time.Parse(d.dt, token); err != nil {
+				if timeVal, err := time.Parse(d.dt, token); err == nil {
 					fval.Set(reflect.ValueOf(timeVal))
 				} else {
 					if !tag.optional && token != "" {

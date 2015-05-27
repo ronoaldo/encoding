@@ -40,6 +40,18 @@ func TestErrorHandling(t *testing.T) {
 	}
 }
 
+func TestTimeLayout(t *testing.T) {
+	r := bytes.NewBuffer([]byte(`19/07/1986`))
+	d := NewDecoder(r).TimeLayout("02/01/2006")
+	ts := struct {
+		Time time.Time `record:"10"`
+	}{}
+	if err := d.Decode(&ts); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	t.Logf("%v", ts)
+}
+
 func Example_fileParsing() {
 	data := `0HEADER____
 1DATA     1
