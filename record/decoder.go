@@ -56,14 +56,14 @@ func (e *ErrorList) Add(errType int, field, token string, err error) {
 
 // Decoder controls decoding of an io.Reader, one line at a time.
 type Decoder struct {
-	r *bufio.Reader
+	r  *bufio.Reader
 	dt string
 }
 
 // NewDecoder initializes a new Decoder to parse the provided Reader.
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{
-		r: bufio.NewReader(r),
+		r:  bufio.NewReader(r),
 		dt: DateFormat,
 	}
 }

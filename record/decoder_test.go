@@ -1,10 +1,10 @@
 package record
 
 import (
-	"io"
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -117,23 +117,23 @@ func Example_fileParsing() {
 
 func Example_fileParsing2() {
 	type UserData struct {
-		Type int `record:"1"`
+		Type int    `record:"1"`
 		Data string `record:"9"`
 	}
 	File := struct {
 		Header struct {
-			Type int `record:"1"`
+			Type     int    `record:"1"`
 			ProcTime string `record:"8"`
 		}
-		Lines []UserData
+		Lines   []UserData
 		Trailer struct {
-			Type int `record:"1"`
+			Type        int `record:"1"`
 			RecordCount int `record:"9"`
 		}
-		Err   []error
+		Err []error
 	}{
 		Lines: make([]UserData, 0),
-		Err: make([]error, 0),
+		Err:   make([]error, 0),
 	}
 
 	r := strings.NewReader("020150201 \n1USERDATA1\n1USERDATA2\n9000000004")
@@ -142,11 +142,11 @@ func Example_fileParsing2() {
 	// the record type to use
 	var (
 		buff = bufio.NewReader(r)
-		dec = NewDecoder(buff)
-		eof = false
+		dec  = NewDecoder(buff)
+		eof  = false
 
 		firstByte []byte
-		err error
+		err       error
 	)
 
 	for !eof {
