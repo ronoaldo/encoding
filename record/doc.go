@@ -7,20 +7,22 @@ for text files that store fixed-width records.
 
 A fixed-width text file is a form of Flat file database [1],
 commonly used to exchange data between
-different financial institutions, banks, and some legacy systems
+different financial institutions and some legacy systems,
 usually with the intent to perform batch processing.
 
 
 Encoding
 
-The Encoder type converts struct fields into fixed width records.
+The Encoder type converts struct fields
+into fixed width records.
 The struct fields of type string and int
 are encoded with left-padding by default,
 respectivelly using spaces or zeroes.
 All other types are ignored by the encoder.
 
 The convenience function Marshal
-encodes a value and returns the encoded record bytes.
+encodes a value and returns
+the encoded record bytes.
 
 
 Decoding

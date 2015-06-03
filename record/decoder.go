@@ -56,14 +56,14 @@ func (e *ErrorList) Add(errType int, field, token string, err error) {
 
 // Decoder controls decoding of an io.Reader, one line at a time.
 type Decoder struct {
-	sc *bufio.Scanner
+	r *bufio.Reader
 	dt string
 }
 
 // NewDecoder initializes a new Decoder to parse the provided Reader.
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{
-		sc: bufio.NewScanner(r),
+		r: bufio.NewReader(r),
 		dt: DateFormat,
 	}
 }
@@ -89,8 +89,6 @@ func (d *Decoder) Decode(value interface{}) error {
 			return fmt.Errorf("record: invalid pointer") // TODO: move to type const
 		}
 		return d.decodeStruct(v.Elem(), v.Elem().Type())
-	case reflect.Struct:
-		return d.decodeStruct(v, t)
 	}
 	return fmt.Errorf("record: invalid value type: %s", t)
 }
@@ -110,13 +108,11 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 		}
 	)
 
-	if !d.sc.Scan() {
-		if d.sc.Err() != nil {
-			errorList.Add(ErrEOF, "", "", d.sc.Err())
-			return errorList
-		}
+	l, err = d.r.ReadString('\n')
+	if err != nil && err != io.EOF {
+		errorList.Add(ErrEOF, "", "", err)
+		return errorList
 	}
-	l = d.sc.Text()
 
 	for i := 0; i < t.NumField() && start < len(l); i++ {
 		f := t.Field(i)
@@ -169,7 +165,8 @@ func (d *Decoder) decodeStruct(v reflect.Value, t reflect.Type) error {
 				}
 			}
 		default:
-			return fmt.Errorf("record: unsupported type: %v", f)
+			errorList.Add(ErrEOF, "", "", fmt.Errorf("record: unsupported type: %v", f))
+			return errorList
 		}
 	}
 

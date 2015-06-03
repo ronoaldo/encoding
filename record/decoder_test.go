@@ -1,6 +1,7 @@
 package record
 
 import (
+	"io"
 	"bufio"
 	"bytes"
 	"fmt"
@@ -112,6 +113,66 @@ func Example_fileParsing() {
 	//Output: Decoded header: {0 HEADER____}
 	//Decoded content: {1 DATA 1}
 	//Skipping line 9TRAILER___
+}
+
+func Example_fileParsing2() {
+	type UserData struct {
+		Type int `record:"1"`
+		Data string `record:"9"`
+	}
+	File := struct {
+		Header struct {
+			Type int `record:"1"`
+			ProcTime string `record:"8"`
+		}
+		Lines []UserData
+		Trailer struct {
+			Type int `record:"1"`
+			RecordCount int `record:"9"`
+		}
+		Err   []error
+	}{
+		Lines: make([]UserData, 0),
+		Err: make([]error, 0),
+	}
+
+	r := strings.NewReader("020150201 \n1USERDATA1\n1USERDATA2\n9000000004")
+
+	// Here we use a buffered reader to peek the first line byte and detect
+	// the record type to use
+	var (
+		buff = bufio.NewReader(r)
+		dec = NewDecoder(buff)
+		eof = false
+
+		firstByte []byte
+		err error
+	)
+
+	for !eof {
+		if firstByte, err = buff.Peek(1); len(firstByte) < 1 {
+			break
+		}
+		eof = err == io.EOF
+		recType := rune(firstByte[0])
+		switch recType {
+		case '0':
+			err = dec.Decode(&File.Header)
+		case '1':
+			u := UserData{}
+			err = dec.Decode(&u)
+			File.Lines = append(File.Lines, u)
+		case '9':
+			err = dec.Decode(&File.Trailer)
+		}
+
+		if err != nil {
+			File.Err = append(File.Err, err)
+		}
+	}
+
+	fmt.Printf("%v\n", File)
+	// Output: {{0 20150201} [{1 USERDATA1} {1 USERDATA2}] {9 4} []}
 }
 
 func ExampleUnmarshal() {
