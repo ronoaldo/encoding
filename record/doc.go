@@ -75,4 +75,4 @@ When the tag option "-" is present, the field is skipped.
 
 [1] http://en.wikipedia.org/wiki/Flat_file_database
 */
-package record
+package record // import "ronoaldo.gopkg.net/encoding/record"
